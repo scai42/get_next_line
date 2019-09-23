@@ -12,60 +12,49 @@
 
 #include "get_next_line.h"
 
-static size_t	ft_strcspn(const char *s, const char *charset)
+static int		bool_nl(int fd, char **line, char **f_tab)
 {
-	size_t	pos;
+	char	*f_heap;
 
-	pos = 0;
-	while (!(ft_strchr(charset, *s++)))
-		pos++;
-	return (pos);
-}
-
-static int		bool_nl(char **ftable, char **line, int fd)
-{
-	char	*fheap;
-
-	if (!*ftable[fd])
-		return (NO_NL_IE_CR_OR_EOT);
-	if (ft_strchr(ftable[fd], 10))
+	if (!*f_tab[fd])
+		return (NO_NL_IE_CR_O_EOT);
+	if (ft_strchr(f_tab[fd], '\n'))
 	{
-		*(ftable[fd] + ft_strcspn(ftable[fd], "\n")) = '\0';
-		*line = ft_strdup(ftable[fd]);
-		fheap = ft_strdup(ft_strchr(ftable[fd], (char)0) + sizeof(char));
-		free(ftable[fd]);
-		ftable[fd] = ft_strdup(fheap);
-		free(fheap);
+		*(f_tab[fd] + ft_strcspn(f_tab[fd], "\n")) = '\0';
+		*line = ft_strdup(f_tab[fd]);
+		f_heap = ft_strdup(ft_strchr(f_tab[fd], (char)0) + sizeof(char));
+		free(f_tab[fd]);
+		f_tab[fd] = ft_strdup(f_heap);
+		free(f_heap);
 	}
 	else
 	{
-		*line = ft_strdup(ftable[fd]);
-		ft_memset((void *)ftable[fd], 0, ft_strcspn(ftable[fd], "\n")
+		*line = ft_strdup(f_tab[fd]);
+		ft_memset((void *)f_tab[fd], 0, ft_strcspn(f_tab[fd], "\n")
 				+ sizeof(char));
 	}
 	return (NL_FOUND);
 }
 
-int				get_next_line(const int fd, char **line)
+int			get_next_line(const int fd, char **line)
 {
-	char		fstack[BUFF_SIZE + sizeof(char)];
-	char		*fheap;
-	static char	*ftable[MAX_FD_SET];
-	int			floop;
+	char		stack[BUFF_SIZE + sizeof(char)];
+	char		*heap;
+	static char	*f_tab[MAX_FD_SET];
+	int		i;
 
-	ERR_HAND(!(fd < 0 || BUFF_SIZE < 0 || !line
-				|| read(fd, 0, 0) == -1));
-	if (!(ftable[fd]))
-		ftable[fd] = ft_strnew(0);
-	while (!(ft_strchr(ftable[fd], 10)))
+	ERR_HAND(!(fd < 0 || BUFF_SIZE < 0 || !line || read(fd, 0, 0) < 0));
+	if (!(f_tab[fd]))
+		f_tab[fd] = ft_strnew(0);
+	while (!(ft_strchr(f_tab[fd], 10)))
 	{
-		floop = read(fd, fstack, BUFF_SIZE);
-		fstack[floop] = (char)0;
-		if (floop == 0)
+		i = read(fd, stack, BUFF_SIZE);
+		stack[i] = (char)0;
+		if (i == 0)
 			break ;
-		fheap = ftable[fd];
-		ftable[fd] = ft_strjoin(fheap, fstack);
-		free(fheap);
+		heap = f_tab[fd];
+		f_tab[fd] = ft_strjoin(heap, stack);
+		free(heap);
 	}
-	return (bool_nl(ftable, line, fd));
+	return (bool_nl(fd, line, f_tab));
 }
